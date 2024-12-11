@@ -1,0 +1,65 @@
+---
+title: "Working with DuckDB in R via the tidyverse"
+format: html
+---
+
+
+```{r}
+#| label: dependencies
+
+library(connections) #To display connection in Positron
+library(DBI) #To manipulate
+library(duckdb) #DB engine
+library(tidyverse) #DB interface
+```
+
+```{r}
+#| label: connect
+
+#The file to connect to
+db_file <- "data/database/example.duckdb"
+
+#Visualize connection in Positron
+connection_open(duckdb(), db_file, read_only = TRUE)
+
+#Intialize connection to an in-memory database file
+conn <- dbConnect(duckdb(), db_file, read_only = TRUE)
+```
+
+```{r}
+# List the tables
+dbListTables(conn)
+```
+
+```{r}
+# Take a look at the data
+tbl(conn, "DAILY_FX")
+```
+
+```{r}
+# Take a look at the data
+tbl(conn, "FARM_PRICES")
+```
+
+```{r}
+# Map through all the data
+dbListTables(conn) |>
+    map(~ tbl(src = conn, .x))
+```
+
+```{r}
+#Join the data and print underlying SQL query and results
+(inner_join(
+    tbl(conn, "DAILY_FX"),
+    tbl(conn, "FARM_PRICES"),
+    by = "DATE") |>
+    head(n = 5) |>
+    show_query())
+```
+
+```{r}
+#| label: disconnect
+
+#Disconnect from the database
+dbDisconnect(conn)
+```
